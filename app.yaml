@@ -1,0 +1,6 @@
+# Configuração da aplicação (ex.: App Engine ou ambiente)
+application: lince
+version: 1
+
+env_variables:
+  ENV: development

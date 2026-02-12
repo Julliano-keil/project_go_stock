@@ -1,0 +1,12 @@
+# Configuração para ambiente de testes
+[app]
+name = "lince-test"
+env = "test"
+
+[server]
+host = "localhost"
+port = 8081
+
+[database]
+# url = "postgres://user:pass@localhost:5432/lince_test"
+# driver = "postgres"

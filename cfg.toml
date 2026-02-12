@@ -1,0 +1,12 @@
+# Configuração principal do projeto Lince
+[app]
+name = "lince"
+env = "development"
+
+[server]
+host = "localhost"
+port = 8080
+
+[database]
+# url = "postgres://user:pass@localhost:5432/lince"
+# driver = "postgres"
