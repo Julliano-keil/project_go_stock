@@ -9,17 +9,20 @@ import (
 	"lince/datastore"
 	"lince/entities"
 	"lince/migrations"
+	"lince/modules"
 	"lince/modules/category"
 	"lince/modules/equipment"
 	"lince/modules/stock_movement"
 	"lince/modules/stock_unit"
 	"lince/modules/subcategory"
+	"lince/modules/user"
 
+	"github.com/gorilla/mux"
 	"github.com/robfig/cron/v3"
 )
 
-func SetupModules(cfg entities.Config) func() error {
-	log.Println("Start modules setup")
+func SetupModules(r *mux.Router, cfg entities.Config) {
+	log.Println("Setup modules")
 
 	database, err := datastore.NewSettingsRepository(cfg)
 	if err != nil {
@@ -35,52 +38,58 @@ func SetupModules(cfg entities.Config) func() error {
 
 	categoryRepository := category.NewCategoryRepository(database)
 	subcategoryRepository := subcategory.NewSubcategoryRepository(database)
+	userRepository := user.NewUserRepository(database)
 	equipmentRepository := equipment.NewEquipmentRepository(database)
 	stockUnitRepository := stock_unit.NewStockUnitRepository(database)
 	stockMovementRepository := stock_movement.NewStockMovementRepository(database)
 
 	// ### USE CASES ###
+
 	categoryUseCase := category.NewCategoryUseCase(categoryRepository, cfg)
 	subcategoryUseCase := subcategory.NewSubcategoryUseCase(subcategoryRepository, cfg)
+	userUseCase := user.NewUserUseCase(userRepository, cfg)
 	equipmentUseCase := equipment.NewEquipmentUseCase(equipmentRepository, cfg)
 	stockUnitUseCase := stock_unit.NewStockUnitUseCase(stockUnitRepository, cfg)
 	stockMovementUseCase := stock_movement.NewStockMovementUseCase(stockMovementRepository, cfg)
 
-	_ = categoryUseCase
-	_ = subcategoryUseCase
 	_ = equipmentUseCase
 	_ = stockUnitUseCase
 	_ = stockMovementUseCase
 
-	cronHandler := cron.New(cron.WithLocation(time.Local))
+	// ### ENDPOINT MODULES ###
 
+	categoryModule := category.NewCategoryModule(categoryUseCase)
+	subcategoryModule := subcategory.NewSubcategoryModule(subcategoryUseCase)
+
+	// ### Authentication Module ###
+
+	authenticationModule := user.NewAuthenticationModule(cfg, userUseCase)
+
+	appModules := []modules.AppModule{
+		categoryModule,
+		subcategoryModule,
+	}
+
+	routerBase := authenticationModule.Setup(r)
+	for _, am := range appModules {
+		moduleSubRouter := routerBase.PathPrefix(am.Path()).Subrouter()
+		_ = am.Setup(moduleSubRouter)
+	}
+
+	// Cron em background
+	cronHandler := cron.New(cron.WithLocation(time.Local))
 	_, _ = cronHandler.AddFunc("@midnight", func() {
 		log.Println("CRON @midnight =================")
 		fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
-
-		ctx := context.Background()
-		company := entities.CompanyDatabaseConfig{}
-
-		_ = ctx
-		_ = company
+		_ = context.Background()
+		_ = entities.CompanyDatabaseConfig{}
 	})
+	cronHandler.Start()
 
-	return func() error {
-		cronHandler.Start()
-
+	go func() {
 		for {
-			ctx := context.Background()
-			company := entities.CompanyDatabaseConfig{}
-
 			log.Println("SYNC =================")
-
-			_ = ctx
-			_ = company
-
-			log.Println("Finished successfully SYNC")
-
-			log.Println("Sleep for 10 minutes")
 			time.Sleep(10 * time.Minute)
 		}
-	}
+	}()
 }

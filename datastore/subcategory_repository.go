@@ -7,16 +7,21 @@ import (
 )
 
 type SubcategoryRepository interface {
-	// ListSubcategories returns all subcategories
 	ListSubcategories(
 		ctx context.Context,
 		company entities.CompanyDatabaseConfig,
-	) ([]entities.Subcategory, error)
+	) ([]entities.SubCategoria, error)
 
-	// GetSubcategoryByID returns a subcategory by id
 	GetSubcategoryByID(
 		ctx context.Context,
 		company entities.CompanyDatabaseConfig,
 		id int64,
-	) (*entities.Subcategory, error)
+	) (*entities.SubCategoria, error)
+
+	Create(
+		ctx context.Context,
+		company entities.CompanyDatabaseConfig,
+		idCategoria int64,
+		nome string,
+	) (int64, error)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type CategoryUseCase interface {
-	ListCategories(ctx context.Context) ([]entities.Category, error)
-
-	GetCategoryByID(ctx context.Context, id int64) (*entities.Category, error)
+	ListCategories(ctx context.Context) ([]entities.Categoria, error)
+	GetCategoryByID(ctx context.Context, id int64) (*entities.Categoria, error)
+	Create(ctx context.Context, nome string) (*entities.Categoria, error)
 }
