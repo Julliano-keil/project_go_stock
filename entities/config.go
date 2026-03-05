@@ -2,7 +2,7 @@ package entities
 
 type Config struct {
 	DSN       string
-	JWTSecret string // chave para assinatura dos tokens JWT
+	JWTSecret string
 }
 
 type CompanyDatabaseConfig struct{}

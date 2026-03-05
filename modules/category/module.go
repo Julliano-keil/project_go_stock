@@ -35,21 +35,33 @@ func (m *moduleCategory) Setup(r *mux.Router) *mux.Router {
 	handlers := []modules.AppModuleHandler{
 		{
 			Handler: m.list,
-			Path:    "",
+			Path:    "/list",
 			Label:   "Lista todas as categorias",
 			Methods: []string{http.MethodGet},
 		},
 		{
 			Handler: m.create,
-			Path:    "",
+			Path:    "/create",
 			Label:   "Cadastra nova categoria",
 			Methods: []string{http.MethodPost},
 		},
 		{
 			Handler: m.getByID,
-			Path:    "/{id}",
+			Path:    "/get/{id}",
 			Label:   "Busca categoria por ID",
 			Methods: []string{http.MethodGet},
+		},
+		{
+			Handler: m.update,
+			Path:    "/update/{id}",
+			Label:   "Busca categoria por ID",
+			Methods: []string{http.MethodPut},
+		},
+		{
+			Handler: m.delete,
+			Path:    "/delete/{id}",
+			Label:   "Busca categoria por ID",
+			Methods: []string{http.MethodPut},
 		},
 	}
 
@@ -88,6 +100,67 @@ func (m *moduleCategory) getByID(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(cat)
+}
+
+type updateCategoriaRequest struct {
+	Nome string `json:"nome"`
+}
+
+func (m *moduleCategory) update(w http.ResponseWriter, r *http.Request) {
+	var req updateCategoriaRequest
+
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "id inválido"})
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: "corpo da requisição inválido"})
+		return
+	}
+
+	if req.Nome == "" {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "nome é obrigatório"})
+		return
+	}
+
+	cat, err := m.useCase.Update(r.Context(), id, req.Nome)
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(cat)
+}
+
+func (m *moduleCategory) delete(w http.ResponseWriter, r *http.Request) {
+	var req updateCategoriaRequest
+
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "id inválido"})
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: "corpo da requisição inválido"})
+		return
+	}
+
+	cat, err := m.useCase.Update(r.Context(), id, req.Nome)
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(cat)
 }
 

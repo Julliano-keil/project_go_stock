@@ -12,4 +12,12 @@ type UserRepository interface {
 		company entities.CompanyDatabaseConfig,
 		email string,
 	) (*entities.Usuario, error)
+
+	Create(
+		ctx context.Context,
+		company entities.CompanyDatabaseConfig,
+		nome string,
+		email string,
+		senha string,
+	) (*entities.Usuario, error)
 }

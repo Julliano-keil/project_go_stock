@@ -6,6 +6,8 @@ import (
 
 	"lince/datastore"
 	"lince/entities"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userRepository struct {
@@ -19,10 +21,20 @@ func NewUserRepository(settings datastore.SettingsRepository) datastore.UserRepo
 func (r userRepository) GetByEmail(ctx context.Context, company entities.CompanyDatabaseConfig, email string) (*entities.Usuario, error) {
 	db := r.conn(company)
 	var u entities.Usuario
+
+	query := `
+	SELECT id,
+	nome, 
+	email, 
+	senha 
+	FROM usuario 
+	WHERE email = ?
+	`
+
 	err := db.QueryRowContext(ctx,
-		"SELECT id, nome, email, senha, salt FROM usuario WHERE email = ?",
+		query,
 		email,
-	).Scan(&u.ID, &u.Nome, &u.Email, &u.Senha, &u.Salt)
+	).Scan(&u.ID, &u.Nome, &u.Email, &u.Senha)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -30,4 +42,30 @@ func (r userRepository) GetByEmail(ctx context.Context, company entities.Company
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (r userRepository) Create(ctx context.Context, company entities.CompanyDatabaseConfig, nome, email, senha string) (*entities.Usuario, error) {
+	db := r.conn(company)
+
+	query := `
+	INSERT INTO usuario (nome, email, senha) VALUES (?, ?, ?)
+	`
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(senha), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.ExecContext(ctx, query, nome, email, string(hash))
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := r.GetByEmail(ctx, company, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+
 }

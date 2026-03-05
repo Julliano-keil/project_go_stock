@@ -8,4 +8,5 @@ import (
 
 type UserUseCase interface {
 	Login(ctx context.Context, email, senha string) (*entities.Usuario, string, error)
+	CreateUser(ctx context.Context, nome, email, senha string) (*entities.Usuario, error)
 }

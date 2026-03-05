@@ -10,4 +10,6 @@ type CategoryUseCase interface {
 	ListCategories(ctx context.Context) ([]entities.Categoria, error)
 	GetCategoryByID(ctx context.Context, id int64) (*entities.Categoria, error)
 	Create(ctx context.Context, nome string) (*entities.Categoria, error)
+	Update(ctx context.Context, id int64, nome string) (*entities.Categoria, error)
+	Delete(ctx context.Context, id int64) error
 }

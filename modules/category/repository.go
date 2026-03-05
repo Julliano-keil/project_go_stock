@@ -18,7 +18,15 @@ func NewCategoryRepository(settings datastore.SettingsRepository) datastore.Cate
 
 func (r categoryRepository) ListCategories(ctx context.Context, company entities.CompanyDatabaseConfig) ([]entities.Categoria, error) {
 	db := r.conn(company)
-	rows, err := db.QueryContext(ctx, "SELECT id, nome FROM categoria ORDER BY nome")
+
+	query := `
+	SELECT id,
+	nome 
+	FROM categoria
+	ORDER BY nome
+   `
+
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +46,15 @@ func (r categoryRepository) ListCategories(ctx context.Context, company entities
 func (r categoryRepository) GetCategoryByID(ctx context.Context, company entities.CompanyDatabaseConfig, id int64) (*entities.Categoria, error) {
 	db := r.conn(company)
 	var c entities.Categoria
-	err := db.QueryRowContext(ctx, "SELECT id, nome FROM categoria WHERE id = ?", id).Scan(&c.ID, &c.Nome)
+
+	query := `
+	SELECT id,
+	nome
+	FROM categoria
+	WHERE id = ?
+	`
+
+	err := db.QueryRowContext(ctx, query, id).Scan(&c.ID, &c.Nome)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -50,9 +66,54 @@ func (r categoryRepository) GetCategoryByID(ctx context.Context, company entitie
 
 func (r categoryRepository) Create(ctx context.Context, company entities.CompanyDatabaseConfig, nome string) (int64, error) {
 	db := r.conn(company)
-	res, err := db.ExecContext(ctx, "INSERT INTO categoria (nome) VALUES (?)", nome)
+
+	query := `
+	INSERT INTO categoria (nome) VALUES (?)
+	`
+
+	res, err := db.ExecContext(ctx, query, nome)
 	if err != nil {
 		return 0, err
 	}
 	return res.LastInsertId()
+}
+
+func (r categoryRepository) Update(
+	ctx context.Context,
+	company entities.CompanyDatabaseConfig,
+	id int64,
+	nome string,
+) (int64, error) {
+
+	db := r.conn(company)
+
+	query := `
+		UPDATE categoria 
+		SET nome = ?
+		WHERE id = ?
+		`
+
+	res, err := db.ExecContext(ctx, query, nome, id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return res.LastInsertId()
+
+}
+
+func (r categoryRepository) Delete(ctx context.Context, company entities.CompanyDatabaseConfig, id int64) error {
+	db := r.conn(company)
+
+	query := `
+	DELETE FROM categoria WHERE id = ?
+	`
+
+	_, err := db.ExecContext(ctx, query, id)
+
+	if err != nil {
+		return nil
+	}
+	return err
 }

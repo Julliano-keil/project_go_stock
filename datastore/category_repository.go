@@ -23,4 +23,17 @@ type CategoryRepository interface {
 		company entities.CompanyDatabaseConfig,
 		nome string,
 	) (int64, error)
+
+	Update(
+		ctx context.Context,
+		company entities.CompanyDatabaseConfig,
+		id int64,
+		nome string,
+	) (int64, error)
+
+	Delete(
+		ctx context.Context,
+		company entities.CompanyDatabaseConfig,
+		id int64,
+	) error
 }

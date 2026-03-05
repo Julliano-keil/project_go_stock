@@ -16,12 +16,8 @@ type SettingsRepository struct {
 }
 
 func NewSettingsRepository(cfg entities.Config) (SettingsRepository, error) {
-	dsn := cfg.DSN
-	if dsn == "" {
-		dsn = defaultDSN
-	}
 
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("mysql", defaultDSN)
 	if err != nil {
 		return SettingsRepository{}, err
 	}

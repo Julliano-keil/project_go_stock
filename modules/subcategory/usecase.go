@@ -2,6 +2,7 @@ package subcategory
 
 import (
 	"context"
+	"errors"
 
 	"lince/datastore"
 	"lince/domain"
@@ -31,4 +32,22 @@ func (u subcategoryUseCase) Create(ctx context.Context, idCategoria int64, nome 
 		return nil, err
 	}
 	return &entities.SubCategoria{ID: id, IDCategoria: idCategoria, Nome: nome}, nil
+}
+
+func (u subcategoryUseCase) Update(ctx context.Context, id int64, idCategoria int64, nome string) (*entities.SubCategoria, error) {
+	sub, err := u.repository.GetSubcategoryByID(ctx, entities.CompanyDatabaseConfig{}, id)
+	if err != nil {
+		return nil, err
+	}
+	if sub == nil {
+		return nil, errors.New("subcategoria não encontrada")
+	}
+	if err := u.repository.Update(ctx, entities.CompanyDatabaseConfig{}, id, idCategoria, nome); err != nil {
+		return nil, err
+	}
+	return &entities.SubCategoria{ID: id, IDCategoria: idCategoria, Nome: nome}, nil
+}
+
+func (u subcategoryUseCase) Delete(ctx context.Context, id int64) error {
+	return u.repository.Delete(ctx, entities.CompanyDatabaseConfig{}, id)
 }

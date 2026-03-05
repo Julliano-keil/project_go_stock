@@ -14,11 +14,11 @@ import (
 )
 
 type moduleAuthentication struct {
-	useCase    domain.UserUseCase
-	cfg        entities.Config
-	name       string
-	path       string
-	jwtSecret  string
+	useCase   domain.UserUseCase
+	cfg       entities.Config
+	name      string
+	path      string
+	jwtSecret string
 }
 
 // NewAuthenticationModule cria o módulo de autenticação (login + router base para rotas protegidas).
@@ -48,6 +48,12 @@ func (m *moduleAuthentication) Setup(r *mux.Router) *mux.Router {
 			Label:   "Login do usuário",
 			Methods: []string{http.MethodPost},
 		},
+		{
+			Handler: m.createUser,
+			Path:    "/create",
+			Label:   "criar usuário",
+			Methods: []string{http.MethodPost},
+		},
 	}
 
 	authSub := r.PathPrefix(m.Path()).Subrouter()
@@ -55,7 +61,6 @@ func (m *moduleAuthentication) Setup(r *mux.Router) *mux.Router {
 		authSub.HandleFunc(h.Path, h.Handler).Methods(h.Methods...)
 	}
 
-	// Router base com middleware para rotas protegidas
 	protected := r.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware([]byte(m.jwtSecret)))
 	return protected
@@ -92,4 +97,31 @@ func (m *moduleAuthentication) login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+type createUserRequest struct {
+	Nome  string `json:"nome"`
+	Email string `json:"email"`
+	Senha string `json:"senha"`
+}
+
+func (m *moduleAuthentication) createUser(w http.ResponseWriter, r *http.Request) {
+	var req createUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: "corpo da requisição inválido"})
+		return
+	}
+	if req.Nome == "" || req.Email == "" || req.Senha == "" {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "nome, email e senha são obrigatórios"})
+		return
+	}
+
+	user, err := m.useCase.CreateUser(r.Context(), req.Nome, req.Email, req.Senha)
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(user)
 }

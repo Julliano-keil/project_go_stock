@@ -24,4 +24,18 @@ type SubcategoryRepository interface {
 		idCategoria int64,
 		nome string,
 	) (int64, error)
+
+	Update(
+		ctx context.Context,
+		company entities.CompanyDatabaseConfig,
+		id int64,
+		idCategoria int64,
+		nome string,
+	) error
+
+	Delete(
+		ctx context.Context,
+		company entities.CompanyDatabaseConfig,
+		id int64,
+	) error
 }

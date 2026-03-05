@@ -35,21 +35,33 @@ func (m *moduleSubcategory) Setup(r *mux.Router) *mux.Router {
 	handlers := []modules.AppModuleHandler{
 		{
 			Handler: m.list,
-			Path:    "",
+			Path:    "/list",
 			Label:   "Lista todas as subcategorias",
 			Methods: []string{http.MethodGet},
 		},
 		{
 			Handler: m.create,
-			Path:    "",
+			Path:    "/create",
 			Label:   "Cadastra nova subcategoria",
 			Methods: []string{http.MethodPost},
 		},
 		{
 			Handler: m.getByID,
-			Path:    "/{id}",
+			Path:    "/get/{id}",
 			Label:   "Busca subcategoria por ID",
 			Methods: []string{http.MethodGet},
+		},
+		{
+			Handler: m.update,
+			Path:    "/update/{id}",
+			Label:   "Atualiza subcategoria por ID",
+			Methods: []string{http.MethodPut},
+		},
+		{
+			Handler: m.delete,
+			Path:    "/delete/{id}",
+			Label:   "Remove subcategoria por ID",
+			Methods: []string{http.MethodDelete},
 		},
 	}
 
@@ -72,16 +84,20 @@ func (m *moduleSubcategory) list(w http.ResponseWriter, r *http.Request) {
 
 func (m *moduleSubcategory) getByID(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
+
 	id, err := strconv.ParseInt(idStr, 10, 64)
+
 	if err != nil {
 		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "id inválido"})
 		return
 	}
+
 	sub, err := m.useCase.GetSubcategoryByID(r.Context(), id)
 	if err != nil {
 		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: err.Error()})
 		return
 	}
+
 	if sub == nil {
 		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "subcategoria não encontrada"})
 		return
@@ -89,6 +105,54 @@ func (m *moduleSubcategory) getByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(sub)
+}
+
+type updateSubcategoriaRequest struct {
+	IDCategoria int64  `json:"id_categoria"`
+	Nome        string `json:"nome"`
+}
+
+func (m *moduleSubcategory) update(w http.ResponseWriter, r *http.Request) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "id inválido"})
+		return
+	}
+
+	var req updateSubcategoriaRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: "corpo da requisição inválido"})
+		return
+	}
+	if req.Nome == "" || req.IDCategoria <= 0 {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "nome e id_categoria são obrigatórios"})
+		return
+	}
+
+	sub, err := m.useCase.Update(r.Context(), id, req.IDCategoria, req.Nome)
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(sub)
+}
+
+func (m *moduleSubcategory) delete(w http.ResponseWriter, r *http.Request) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 4, Message: "id inválido"})
+		return
+	}
+
+	if err := m.useCase.Delete(r.Context(), id); err != nil {
+		httputil.WriteError(w, entities.ErrorStruct{Code: 1, Message: err.Error()})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type createSubcategoriaRequest struct {

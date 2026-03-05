@@ -53,6 +53,13 @@ func (u userUseCase) Login(ctx context.Context, email, senha string) (*entities.
 	}
 
 	usr.Senha = ""
-	usr.Salt = ""
 	return usr, tokenStr, nil
+}
+
+func (u userUseCase) CreateUser(ctx context.Context, nome, email, senha string) (*entities.Usuario, error) {
+	usr, err := u.repository.Create(ctx, entities.CompanyDatabaseConfig{}, nome, email, senha)
+	if err != nil {
+		return nil, err
+	}
+	return usr, nil
 }

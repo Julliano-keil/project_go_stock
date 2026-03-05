@@ -1,10 +1,7 @@
 package setup
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"time"
 
 	"lince/datastore"
 	"lince/entities"
@@ -18,7 +15,6 @@ import (
 	"lince/modules/user"
 
 	"github.com/gorilla/mux"
-	"github.com/robfig/cron/v3"
 )
 
 func SetupModules(r *mux.Router, cfg entities.Config) {
@@ -70,26 +66,12 @@ func SetupModules(r *mux.Router, cfg entities.Config) {
 		subcategoryModule,
 	}
 
-	routerBase := authenticationModule.Setup(r)
+	
+	apiRouter := r.PathPrefix("/api").Subrouter()
+	routerBase := authenticationModule.Setup(apiRouter)
 	for _, am := range appModules {
 		moduleSubRouter := routerBase.PathPrefix(am.Path()).Subrouter()
 		_ = am.Setup(moduleSubRouter)
 	}
 
-	// Cron em background
-	cronHandler := cron.New(cron.WithLocation(time.Local))
-	_, _ = cronHandler.AddFunc("@midnight", func() {
-		log.Println("CRON @midnight =================")
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
-		_ = context.Background()
-		_ = entities.CompanyDatabaseConfig{}
-	})
-	cronHandler.Start()
-
-	go func() {
-		for {
-			log.Println("SYNC =================")
-			time.Sleep(10 * time.Minute)
-		}
-	}()
 }

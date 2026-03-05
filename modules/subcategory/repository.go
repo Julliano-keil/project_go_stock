@@ -16,9 +16,21 @@ func NewSubcategoryRepository(settings datastore.SettingsRepository) datastore.S
 	return subcategoryRepository{conn: settings.Connection}
 }
 
-func (r subcategoryRepository) ListSubcategories(ctx context.Context, company entities.CompanyDatabaseConfig) ([]entities.SubCategoria, error) {
+func (r subcategoryRepository) ListSubcategories(
+	ctx context.Context,
+	company entities.CompanyDatabaseConfig,
+) ([]entities.SubCategoria, error) {
+
 	db := r.conn(company)
-	rows, err := db.QueryContext(ctx, "SELECT id, id_categoria, nome FROM sub_categoria ORDER BY nome")
+
+	query := `
+	SELECT id,
+	id_categoria,
+	nome
+	FROM sub_categoria
+	ORDER BY nome
+	`
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -36,24 +48,68 @@ func (r subcategoryRepository) ListSubcategories(ctx context.Context, company en
 }
 
 func (r subcategoryRepository) GetSubcategoryByID(ctx context.Context, company entities.CompanyDatabaseConfig, id int64) (*entities.SubCategoria, error) {
-	db := r.conn(company)
+	query := `
+	SELECT id,
+	id_categoria,
+	nome 
+	FROM sub_categoria 
+	WHERE id = ?
+	`
 	var s entities.SubCategoria
-	err := db.QueryRowContext(ctx, "SELECT id, id_categoria, nome FROM sub_categoria WHERE id = ?", id).
-		Scan(&s.ID, &s.IDCategoria, &s.Nome)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
+	db := r.conn(company)
+	err := db.QueryRowContext(ctx, query, id).Scan(&s.ID, &s.IDCategoria, &s.Nome)
+
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &s, nil
 }
 
-func (r subcategoryRepository) Create(ctx context.Context, company entities.CompanyDatabaseConfig, idCategoria int64, nome string) (int64, error) {
+func (r subcategoryRepository) Create(
+	ctx context.Context,
+	company entities.CompanyDatabaseConfig,
+	idCategoria int64,
+	nome string,
+) (int64, error) {
+
+	query := `
+	INSERT INTO sub_categoria (id_categoria, nome) VALUES (?, ?)
+	`
 	db := r.conn(company)
-	res, err := db.ExecContext(ctx, "INSERT INTO sub_categoria (id_categoria, nome) VALUES (?, ?)", idCategoria, nome)
+	res, err := db.ExecContext(ctx, query, idCategoria, nome)
 	if err != nil {
 		return 0, err
 	}
 	return res.LastInsertId()
+}
+
+func (r subcategoryRepository) Update(
+	ctx context.Context,
+	company entities.CompanyDatabaseConfig,
+	id int64,
+	idCategoria int64,
+	nome string,
+) error {
+	db := r.conn(company)
+
+	query := `
+		UPDATE sub_categoria 
+		SET id_categoria = ?, nome = ?
+		WHERE id = ?
+	`
+
+	_, err := db.ExecContext(ctx, query, idCategoria, nome, id)
+	return err
+}
+
+func (r subcategoryRepository) Delete(ctx context.Context, company entities.CompanyDatabaseConfig, id int64) error {
+	db := r.conn(company)
+
+	query := `DELETE FROM sub_categoria WHERE id = ?`
+
+	_, err := db.ExecContext(ctx, query, id)
+	return err
 }
