@@ -48,14 +48,14 @@ func SetupModules(r *mux.Router, cfg entities.Config) {
 	stockUnitUseCase := stock_unit.NewStockUnitUseCase(stockUnitRepository, cfg)
 	stockMovementUseCase := stock_movement.NewStockMovementUseCase(stockMovementRepository, cfg)
 
-	_ = equipmentUseCase
-	_ = stockUnitUseCase
 	_ = stockMovementUseCase
 
 	// ### ENDPOINT MODULES ###
 
 	categoryModule := category.NewCategoryModule(categoryUseCase)
 	subcategoryModule := subcategory.NewSubcategoryModule(subcategoryUseCase)
+	equipmentModule := equipment.NewEquipmentModule(equipmentUseCase)
+	stockUnitModule := stock_unit.NewStockUnitModule(stockUnitUseCase)
 
 	// ### Authentication Module ###
 
@@ -64,6 +64,8 @@ func SetupModules(r *mux.Router, cfg entities.Config) {
 	appModules := []modules.AppModule{
 		categoryModule,
 		subcategoryModule,
+		equipmentModule,
+		stockUnitModule,
 	}
 
 	
