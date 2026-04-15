@@ -8,4 +8,6 @@ type Movimentacao struct {
 	TipoMovimentacao string    `json:"tipo_movimentacao"`
 	Data             time.Time `json:"data"`
 	IDUser           int64     `json:"id_user"`
+	Quantidade       int       `json:"quantidade,omitempty"`
+	IDsItemEstoque   []int64   `json:"ids_item_estoque,omitempty"`
 }

@@ -42,13 +42,13 @@ func (m *moduleEquipment) Setup(r *mux.Router) *mux.Router {
 		{
 			Handler: m.create,
 			Path:    "/create",
-			Label:   "Cadastra novo equipamento",
+			Label:   "Cadastra novo equipmento",
 			Methods: []string{http.MethodPost},
 		},
 		{
 			Handler: m.getByID,
 			Path:    "/get/{id}",
-			Label:   "Busca equipamento por ID",
+			Label:   "Busca equipamento por Id",
 			Methods: []string{http.MethodGet},
 		},
 		{
